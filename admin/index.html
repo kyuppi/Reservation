@@ -82,6 +82,7 @@
           <label class="field"><span>店舗名</span><input id="settingStoreName" type="text" maxlength="100" required></label>
           <label class="field"><span>予約画面の背景画像URL</span><input id="settingBackgroundUrl" type="url" placeholder="https://..." maxlength="1500"><small>画像そのものをURLで指定します。imgur等の直リンクや自分で用意した画像URLを使用してください。</small></label>
           <label class="field"><span>予約通知を受け取るメールアドレス</span><input id="settingNotifyEmail" type="email" maxlength="160" placeholder="shop@example.com"></label>
+          <label class="field"><span>1時間帯あたりの予約上限人数（0 = 無制限）</span><input id="settingMaxReservationsPerSlot" type="number" min="0" max="9999" step="1" value="0"><small>同じ来店日時への予約件数を制限します。0なら従来どおり無制限です。</small></label>
           <button class="primary-button" type="submit">店舗設定を保存</button>
         </form>
         <form id="passwordForm" class="panel form-panel">

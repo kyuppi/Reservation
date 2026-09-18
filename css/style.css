@@ -1,263 +1,104 @@
-const SHEETS = {
-  SETTINGS: 'Settings',
-  MENUS: 'Menus',
-  HOLIDAYS: 'Holidays',
-  RESERVATIONS: 'Reservations',
-  SESSIONS: 'Sessions'
-};
-
-const DEFAULTS = {
-  storeName: '店舗予約',
-  backgroundUrl: '',
-  notifyEmail: ''
-};
-
-// 初回セットアップだけ、この値を変更できます。
-// 初回ログイン後は管理画面から変更できます。
-const INITIAL_ADMIN_PASSWORD = 'change-me-1234';
-
-/** 初回だけApps Scriptエディタから実行してください。 */
-function setup() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  if (!ss) throw new Error('スプレッドシートに紐づいたApps Scriptから実行してください。');
-  PropertiesService.getScriptProperties().setProperty('SPREADSHEET_ID', ss.getId());
-  setupSheets_();
-  return 'セットアップ完了';
+:root {
+  --bg: #f6f7fb;
+  --card: rgba(255,255,255,.96);
+  --text: #111827;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+  --primary: #111827;
+  --primary-hover: #000;
+  --accent: #f59e0b;
+  --danger: #dc2626;
+  --success: #059669;
+  --shadow: 0 16px 45px rgba(15,23,42,.08);
+  --radius: 22px;
 }
-
-function db_() {
-  const id = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
-  if (id) return SpreadsheetApp.openById(id);
-  const active = SpreadsheetApp.getActiveSpreadsheet();
-  if (active) {
-    PropertiesService.getScriptProperties().setProperty('SPREADSHEET_ID', active.getId());
-    return active;
-  }
-  throw new Error('スプレッドシートIDが未設定です。Apps Scriptエディタでsetup()を1回実行してください。');
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; font-family: 'Noto Sans JP', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: var(--text); background: var(--bg); line-height: 1.6; }
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .55; }
+.hero { position: relative; min-height: 360px; display: grid; place-items: end center; padding: 56px 20px; color: #fff; background: linear-gradient(135deg,#111827,#374151); background-size: cover; background-position: center; overflow: hidden; }
+.hero-overlay { position: absolute; inset: 0; background: linear-gradient(180deg,rgba(0,0,0,.15),rgba(0,0,0,.65)); }
+.hero-content { position: relative; width: min(1100px, 100%); text-align: center; }
+.brand-mark { display: inline-block; font-size: 11px; letter-spacing: .2em; font-weight: 800; opacity: .8; }
+.hero h1 { margin: 10px 0 8px; font-size: clamp(32px,7vw,62px); line-height: 1.1; letter-spacing: -.04em; }
+.hero p { margin: 0; font-size: clamp(14px,2.5vw,18px); opacity: .92; }
+.container { width: min(1000px, calc(100% - 32px)); margin: 0 auto; }
+.customer-main { margin-top: -34px; position: relative; z-index: 2; padding-bottom: 44px; }
+.card { background: var(--card); border: 1px solid rgba(255,255,255,.8); border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px; margin-bottom: 18px; backdrop-filter: blur(10px); }
+.section-heading { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 24px; }
+.section-heading.compact { margin-bottom: 18px; }
+.section-heading h2 { margin: 0 0 4px; font-size: 20px; }
+.section-heading p { margin: 0; color: var(--muted); font-size: 13px; }
+.step { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 14px; background: #111827; color: white; font-size: 12px; font-weight: 800; letter-spacing: .08em; flex: 0 0 auto; }
+.form-grid { display: grid; gap: 16px; }
+.form-grid.two { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.field { display: block; }
+.field > span, .contact-label { display: block; margin: 0 0 7px; font-size: 13px; font-weight: 700; }
+.field b, .contact-label b { color: var(--danger); }
+.field input, .field select { width: 100%; min-height: 52px; border: 1px solid var(--line); border-radius: 14px; padding: 0 14px; background: #fff; color: var(--text); outline: none; transition: .18s ease; }
+.field input:focus, .field select:focus { border-color: #9ca3af; box-shadow: 0 0 0 4px rgba(17,24,39,.08); }
+.field small { display: block; color: var(--muted); font-size: 11px; margin-top: 6px; }
+.hint { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: #fffbeb; color: #92400e; font-size: 12px; }
+.menu-list { display: grid; gap: 14px; }
+.menu-item { border: 1px solid var(--line); border-radius: 18px; padding: 18px; background: #fff; }
+.menu-top { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+.menu-name { margin: 0; font-size: 17px; font-weight: 800; }
+.menu-desc { margin: 4px 0 0; font-size: 12px; color: var(--muted); }
+.menu-price { font-weight: 800; white-space: nowrap; }
+.quantity-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; }
+.stepper { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 13px; overflow: hidden; }
+.stepper button { width: 44px; height: 44px; border: 0; background: #f9fafb; font-size: 20px; }
+.stepper button:hover { background: #f3f4f6; }
+.stepper span { min-width: 46px; text-align: center; font-weight: 800; }
+.toppings { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line); }
+.topping-title { margin: 0 0 8px; font-size: 12px; font-weight: 800; }
+.topping-list { display: grid; gap: 7px; }
+.check-row { display: flex; align-items: center; gap: 9px; font-size: 13px; }
+.check-row input { width: 18px; height: 18px; accent-color: #111827; }
+.out-badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 5px 9px; font-size: 10px; font-weight: 800; background: #fef2f2; color: #b91c1c; }
+.order-total-row { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--line); margin-top: 18px; padding-top: 18px; font-size: 15px; }
+.order-total-row strong { font-size: 24px; }
+.contact-choice { margin-top: 16px; }
+.summary { display: grid; gap: 9px; background: #f9fafb; border-radius: 16px; padding: 16px; margin-bottom: 16px; }
+.summary-line { display: flex; justify-content: space-between; gap: 16px; font-size: 13px; }
+.summary-line span:first-child { color: var(--muted); }
+.summary-order { white-space: pre-wrap; }
+.primary-button, .secondary-button, .ghost-button, .text-button { border: 0; border-radius: 13px; font-weight: 800; transition: .18s ease; }
+.primary-button { background: var(--primary); color: white; min-height: 52px; padding: 0 20px; width: 100%; }
+.primary-button:hover { background: var(--primary-hover); transform: translateY(-1px); }
+.primary-button.small, .secondary-button { width: auto; min-height: 44px; padding: 0 16px; }
+.secondary-button { background: #fff; color: var(--text); border: 1px solid var(--line); }
+.secondary-button:hover { background: #f9fafb; }
+.ghost-button { background: transparent; border: 1px solid rgba(255,255,255,.18); color: inherit; min-height: 42px; padding: 0 14px; }
+.link-button { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+.text-button { background: transparent; color: #374151; padding: 4px 0; font-size: 12px; }
+.privacy-note { margin: 10px 0 0; color: var(--muted); font-size: 10px; text-align: center; }
+.message { margin: 0 0 18px; border-radius: 14px; padding: 12px 14px; font-size: 13px; }
+.message.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+.message.success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+.empty-state { padding: 28px; text-align: center; border: 1px dashed var(--line); border-radius: 16px; color: var(--muted); font-size: 13px; }
+.site-footer { padding: 0 20px 28px; text-align: center; color: #9ca3af; font-size: 11px; }
+.loading-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(17,24,39,.35); display: grid; place-items: center; backdrop-filter: blur(5px); }
+.loading-card { background: white; border-radius: 18px; padding: 22px; box-shadow: var(--shadow); text-align: center; min-width: 220px; }
+.loading-card p { margin: 10px 0 0; font-size: 12px; }
+.spinner { width: 30px; height: 30px; margin: auto; border: 3px solid #e5e7eb; border-top-color: #111827; border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.modal { position: fixed; inset: 0; z-index: 1100; display: grid; place-items: center; padding: 18px; }
+.modal-backdrop { position: absolute; inset: 0; background: rgba(15,23,42,.58); backdrop-filter: blur(4px); }
+.modal-card { position: relative; width: min(520px,100%); max-height: calc(100vh - 36px); overflow: auto; background: #fff; border-radius: 22px; box-shadow: 0 24px 80px rgba(0,0,0,.22); padding: 28px; }
+.modal-card.large { width: min(700px,100%); }
+.modal-card h2 { margin-top: 0; }
+.modal-close { position: absolute; top: 12px; right: 14px; border: 0; background: transparent; font-size: 30px; color: #6b7280; }
+.success-icon { width: 58px; height: 58px; border-radius: 50%; background: #ecfdf5; color: #059669; display: grid; place-items: center; font-size: 28px; font-weight: 900; margin-bottom: 12px; }
+@media (max-width: 720px) {
+  .hero { min-height: 320px; }
+  .container { width: min(100% - 20px, 1000px); }
+  .customer-main { margin-top: -24px; }
+  .card { padding: 20px; border-radius: 18px; }
+  .form-grid.two { grid-template-columns: 1fr; }
+  .menu-top { flex-direction: column; }
+  .menu-price { align-self: flex-start; }
+  .summary-line { flex-direction: column; gap: 2px; }
 }
-
-function doGet(e) {
-  try {
-    setupSheets_();
-    const action = (e.parameter.action || 'getPublicData').trim();
-    const callback = (e.parameter.callback || '').trim();
-    const data = route_(action, e.parameter);
-    return respond_(callback, { ok: true, data });
-  } catch (err) {
-    const callback = (e && e.parameter && e.parameter.callback) || '';
-    return respond_(callback, { ok: false, error: safeError_(err) });
-  }
-}
-
-function route_(action, p) {
-  switch (action) {
-    case 'getPublicData': return getPublicData_();
-    case 'createReservation': return createReservation_(p);
-    case 'adminLogin': return adminLogin_(p.passwordHash);
-    case 'getAdminData': return getAdminData_(p.token);
-    case 'updateSettings': return updateSettings_(p.token, p);
-    case 'changePassword': return changePassword_(p.token, p.currentHash, p.newHash);
-    case 'createMenu': return saveMenu_(p.token, p, false);
-    case 'updateMenu': return saveMenu_(p.token, p, true);
-    case 'deleteMenu': return deleteMenu_(p.token, p.id);
-    case 'toggleSoldOut': return toggleSoldOut_(p.token, p.id);
-    case 'addHoliday': return addHoliday_(p.token, p.date, p.reason);
-    case 'deleteHoliday': return deleteHoliday_(p.token, p.date);
-    case 'cancelReservation': return cancelReservation_(p.token, p.id);
-    default: throw new Error('不明な操作です。');
-  }
-}
-
-function respond_(callback, obj) {
-  const json = JSON.stringify(obj).replace(/<\/script/gi, '<\\/script');
-  if (callback) {
-    if (!/^[A-Za-z_$][\w.$]*$/.test(callback)) throw new Error('不正なcallbackです。');
-    return ContentService.createTextOutput(callback + '(' + json + ')').setMimeType(ContentService.MimeType.JAVASCRIPT);
-  }
-  return ContentService.createTextOutput(json).setMimeType(ContentService.MimeType.JSON);
-}
-
-function setupSheets_() {
-  const ss = db_();
-  ensureSheet_(ss, SHEETS.SETTINGS, ['key','value']);
-  ensureSheet_(ss, SHEETS.MENUS, ['id','name','price','description','soldOut','toppingsJson']);
-  ensureSheet_(ss, SHEETS.HOLIDAYS, ['date','reason']);
-  ensureSheet_(ss, SHEETS.RESERVATIONS, ['id','visitDate','visitTime','name','guests','phone','email','orderJson','total','createdAt','status']);
-  ensureSheet_(ss, SHEETS.SESSIONS, ['token','expiresAt']);
-  const settings = getSettings_();
-  if (!settings.adminPasswordHash) {
-    setSetting_('adminPasswordHash', sha256_(INITIAL_ADMIN_PASSWORD));
-  }
-  if (!settings.storeName) setSetting_('storeName', DEFAULTS.storeName);
-}
-
-function ensureSheet_(ss, name, headers) {
-  let sh = ss.getSheetByName(name);
-  if (!sh) sh = ss.insertSheet(name);
-  if (sh.getLastRow() === 0) sh.appendRow(headers);
-  else {
-    const current = sh.getRange(1,1,1,headers.length).getValues()[0];
-    const mismatch = headers.some((h,i) => current[i] !== h);
-    if (mismatch) sh.getRange(1,1,1,headers.length).setValues([headers]);
-  }
-  return sh;
-}
-
-function getSettings_() {
-  const sh = db_().getSheetByName(SHEETS.SETTINGS);
-  const values = sh.getDataRange().getValues();
-  const out = {};
-  for (let i=1;i<values.length;i++) if (values[i][0]) out[String(values[i][0])] = String(values[i][1] ?? '');
-  return out;
-}
-function setSetting_(key, value) {
-  const sh = db_().getSheetByName(SHEETS.SETTINGS);
-  const values = sh.getDataRange().getValues();
-  for (let i=1;i<values.length;i++) {
-    if (String(values[i][0]) === key) { sh.getRange(i+1,2).setValue(value); return; }
-  }
-  sh.appendRow([key,value]);
-}
-
-function getPublicData_() {
-  const settings = getSettings_();
-  return {
-    settings: {
-      storeName: settings.storeName || DEFAULTS.storeName,
-      backgroundUrl: settings.backgroundUrl || '',
-      notifyEmail: settings.notifyEmail || ''
-    },
-    menus: readMenus_(),
-    holidays: readHolidays_()
-  };
-}
-
-function readMenus_() {
-  const sh = db_().getSheetByName(SHEETS.MENUS);
-  const values = sh.getDataRange().getValues();
-  return values.slice(1).filter(r => r[0]).map(r => ({
-    id: String(r[0]), name: String(r[1]), price: Number(r[2]) || 0, description: String(r[3] || ''), soldOut: String(r[4]).toLowerCase() === 'true', toppings: parseJson_(r[5], [])
-  }));
-}
-function readHolidays_() {
-  const sh = db_().getSheetByName(SHEETS.HOLIDAYS);
-  const values = sh.getDataRange().getValues();
-  return values.slice(1).filter(r => r[0]).map(r => ({ date: formatDate_(r[0]), reason: String(r[1] || '') }));
-}
-function readReservations_() {
-  const sh = db_().getSheetByName(SHEETS.RESERVATIONS);
-  const values = sh.getDataRange().getValues();
-  return values.slice(1).filter(r => r[0]).map(r => ({
-    id:String(r[0]), visitDate:formatDate_(r[1]), visitTime:formatTime_(r[2]), name:String(r[3]), guests:Number(r[4])||0, phone:String(r[5]||''), email:String(r[6]||''), order:parseJson_(r[7],[]), total:Number(r[8])||0, createdAt:formatDateTime_(r[9]), status:String(r[10]||'confirmed')
-  }));
-}
-function parseJson_(value, fallback) { try { return JSON.parse(String(value || '')); } catch (_) { return fallback; } }
-function formatDate_(value) {
-  if (value instanceof Date && !isNaN(value)) return Utilities.formatDate(value, Session.getScriptTimeZone() || 'Asia/Tokyo','yyyy-MM-dd');
-  const s = String(value || '');
-  return s.slice(0,10);
-}
-function formatTime_(value) {
-  if (value instanceof Date && !isNaN(value)) return Utilities.formatDate(value, Session.getScriptTimeZone() || 'Asia/Tokyo','HH:mm');
-  return String(value || '').slice(0,5);
-}
-function formatDateTime_(value) {
-  if (value instanceof Date && !isNaN(value)) return Utilities.formatDate(value, Session.getScriptTimeZone() || 'Asia/Tokyo','yyyy-MM-dd HH:mm:ss');
-  return String(value || '');
-}
-
-function createReservation_(p) {
-  const visitDate = clean_(p.visitDate), visitTime = clean_(p.visitTime), name = clean_(p.name), phone = clean_(p.phone), email = clean_(p.email);
-  const guests = Number(p.guests);
-  const order = parseJson_(p.orderJson, []);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(visitDate)) throw new Error('来店日が不正です。');
-  if (!/^\d{2}:\d{2}$/.test(visitTime)) throw new Error('来店時間が不正です。');
-  if (!name || !guests || guests < 1 || guests > 99 || (!phone && !email) || !Array.isArray(order) || !order.length) throw new Error('予約内容が不足しています。');
-  if (readHolidays_().some(h => h.date === visitDate)) throw new Error('その日は臨時休業です。');
-  const menuMap = {}; readMenus_().forEach(m => menuMap[m.id] = m);
-  const normalized = order.map(item => {
-    const menu = menuMap[String(item.menuId)];
-    if (!menu || menu.soldOut) throw new Error('売り切れ、または存在しないメニューが含まれています。');
-    const qty = Math.max(1, Math.min(99, Number(item.quantity)||0));
-    const selected = Array.isArray(item.toppings) ? item.toppings : [];
-    const allowed = (menu.toppings || []).map(t => String(t.name));
-    const toppings = selected.filter(t => allowed.indexOf(String(t.name)) !== -1).map(t => ({ name:String(t.name), price:Number(t.price)||0 }));
-    return { menuId:menu.id, name:menu.name, quantity:qty, unitPrice:menu.price, toppings:toppings };
-  });
-  const total = normalized.reduce((sum,item) => sum + item.quantity * (item.unitPrice + item.toppings.reduce((s,t)=>s+t.price,0)),0);
-  const id = 'R' + Utilities.formatDate(new Date(), Session.getScriptTimeZone()||'Asia/Tokyo','yyyyMMddHHmmss') + '-' + Math.floor(1000+Math.random()*9000);
-  const createdAt = new Date();
-  db_().getSheetByName(SHEETS.RESERVATIONS).appendRow([id,visitDate,visitTime,name,guests,phone,email,JSON.stringify(normalized),total,createdAt,'confirmed']);
-  sendReservationEmail_({id,visitDate,visitTime,name,guests,phone,email,order:normalized,total});
-  return { reservationId:id };
-}
-
-function sendReservationEmail_(r) {
-  const settings = getSettings_();
-  const to = settings.notifyEmail;
-  if (!to) return;
-  const store = settings.storeName || '店舗予約';
-  const body = [
-    `${store}に新しい予約が入りました。`,
-    '',
-    `予約番号: ${r.id}`,
-    `ご来店日時: ${r.visitDate} ${r.visitTime}`,
-    `お名前: ${r.name}`,
-    `人数: ${r.guests}名`,
-    `電話番号: ${r.phone || '未入力'}`,
-    `メール: ${r.email || '未入力'}`,
-    '',
-    '注文内容:',
-    r.order.map(i => `・${i.name} × ${i.quantity}${i.toppings && i.toppings.length ? '（'+i.toppings.map(t=>t.name).join('、')+'）' : ''}`).join('\n'),
-    `合計: ¥${Number(r.total).toLocaleString('ja-JP')}`
-  ].join('\n');
-  MailApp.sendEmail({to, subject:`【${store}】新しい予約 ${r.visitDate} ${r.visitTime}`, body});
-}
-
-function adminLogin_(passwordHash) {
-  const settings = getSettings_();
-  if (!passwordHash || String(passwordHash) !== String(settings.adminPasswordHash)) throw new Error('パスワードが違います。');
-  const token = Utilities.getUuid() + Utilities.getUuid().replace(/-/g,'');
-  const expires = new Date(Date.now() + 6*60*60*1000);
-  db_().getSheetByName(SHEETS.SESSIONS).appendRow([token, expires]);
-  return { token };
-}
-function requireAuth_(token) {
-  if (!token) throw new Error('管理者認証が必要です。');
-  const sh = db_().getSheetByName(SHEETS.SESSIONS);
-  const values = sh.getDataRange().getValues();
-  for (let i=values.length-1;i>=1;i--) {
-    if (String(values[i][0]) === String(token)) {
-      const exp = values[i][1] instanceof Date ? values[i][1] : new Date(values[i][1]);
-      if (exp > new Date()) return true;
-      throw new Error('セッションの有効期限が切れています。');
-    }
-  }
-  throw new Error('無効なセッションです。');
-}
-function getAdminData_(token) { requireAuth_(token); const settings=getSettings_(); return {settings:{storeName:settings.storeName||DEFAULTS.storeName,backgroundUrl:settings.backgroundUrl||'',notifyEmail:settings.notifyEmail||''},menus:readMenus_(),holidays:readHolidays_(),reservations:readReservations_()}; }
-
-function updateSettings_(token,p) { requireAuth_(token); setSetting_('storeName',clean_(p.storeName)||DEFAULTS.storeName); setSetting_('backgroundUrl',clean_(p.backgroundUrl)); setSetting_('notifyEmail',clean_(p.notifyEmail)); return {ok:true}; }
-function changePassword_(token,currentHash,newHash) { requireAuth_(token); const settings=getSettings_(); if (String(currentHash)!==String(settings.adminPasswordHash)) throw new Error('現在のパスワードが違います。'); if (!/^[0-9a-f]{64}$/.test(String(newHash))) throw new Error('新しいパスワード情報が不正です。'); setSetting_('adminPasswordHash',newHash); return {ok:true}; }
-
-function saveMenu_(token,p,isUpdate) {
-  requireAuth_(token);
-  const name=clean_(p.name); const price=Number(p.price); if(!name || !isFinite(price) || price < 0) throw new Error('メニュー名と価格を入力してください。');
-  const toppings=parseJson_(p.toppingsJson,[]).filter(t => t && clean_(t.name)).map(t => ({name:clean_(t.name),price:Math.max(0,Number(t.price)||0)}));
-  const sh=db_().getSheetByName(SHEETS.MENUS);
-  if (isUpdate) {
-    const id=String(p.id); const values=sh.getDataRange().getValues();
-    for(let i=1;i<values.length;i++) if(String(values[i][0])===id){ sh.getRange(i+1,2,1,5).setValues([[name,price,clean_(p.description),String(p.soldOut)==='true',JSON.stringify(toppings)]]); return {id}; }
-    throw new Error('指定されたメニューが見つかりません。');
-  }
-  const id='M'+Date.now()+Math.floor(Math.random()*1000); sh.appendRow([id,name,price,clean_(p.description),String(p.soldOut)==='true',JSON.stringify(toppings)]); return {id};
-}
-function deleteMenu_(token,id) { requireAuth_(token); const sh=db_().getSheetByName(SHEETS.MENUS); const values=sh.getDataRange().getValues(); for(let i=1;i<values.length;i++) if(String(values[i][0])===String(id)){sh.deleteRow(i+1);return {ok:true};} throw new Error('メニューが見つかりません。'); }
-function toggleSoldOut_(token,id) { requireAuth_(token); const sh=db_().getSheetByName(SHEETS.MENUS); const values=sh.getDataRange().getValues(); for(let i=1;i<values.length;i++) if(String(values[i][0])===String(id)){ const now=String(values[i][4]).toLowerCase()==='true'; sh.getRange(i+1,5).setValue(!now); return {soldOut:!now}; } throw new Error('メニューが見つかりません。'); }
-function addHoliday_(token,date,reason) { requireAuth_(token); if(!/^\d{4}-\d{2}-\d{2}$/.test(String(date))) throw new Error('日付が不正です。'); if(readHolidays_().some(h=>h.date===date)) throw new Error('その休業日はすでに登録されています。'); db_().getSheetByName(SHEETS.HOLIDAYS).appendRow([date,clean_(reason)||'臨時休業']); return {ok:true}; }
-function deleteHoliday_(token,date) { requireAuth_(token); const sh=db_().getSheetByName(SHEETS.HOLIDAYS); const values=sh.getDataRange().getValues(); for(let i=1;i<values.length;i++) if(formatDate_(values[i][0])===String(date)){sh.deleteRow(i+1);return {ok:true};} throw new Error('休業日が見つかりません。'); }
-function cancelReservation_(token,id) { requireAuth_(token); const sh=db_().getSheetByName(SHEETS.RESERVATIONS); const values=sh.getDataRange().getValues(); for(let i=1;i<values.length;i++) if(String(values[i][0])===String(id)){sh.getRange(i+1,11).setValue('cancelled');return {ok:true};} throw new Error('予約が見つかりません。'); }
-
-function sha256_(text) { const bytes=Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,String(text),Utilities.Charset.UTF_8); return bytes.map(b => ('0'+(b<0?b+256:b).toString(16)).slice(-2)).join(''); }
-function clean_(value) { return String(value == null ? '' : value).trim(); }
-function safeError_(err) { return err && err.message ? String(err.message) : 'サーバーエラーが発生しました。'; }

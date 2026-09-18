@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <title>管理画面</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="admin.css">
+  <script defer src="../js/config.js"></script>
+  <script defer src="../js/api.js"></script>
+  <script defer src="admin.js"></script>
+</head>
+<body class="admin-page">
+  <div id="toast" class="toast" hidden></div>
+
+  <section id="loginView" class="admin-login-wrap">
+    <div class="admin-login-card">
+      <div class="brand-mark">ADMIN PANEL</div>
+      <h1>予約管理画面</h1>
+      <p class="muted">管理者パスワードを入力してください</p>
+      <label class="field"><span>パスワード</span><input id="loginPassword" type="password" autocomplete="current-password" placeholder="パスワード"></label>
+      <button id="loginButton" class="primary-button" type="button">ログイン</button>
+      <a class="back-link" href="../">← 予約画面へ戻る</a>
+    </div>
+  </section>
+
+  <section id="adminApp" class="admin-shell" hidden>
+    <aside class="admin-sidebar">
+      <div>
+        <div class="brand-mark">ADMIN PANEL</div>
+        <h1 id="adminStoreName">店舗予約</h1>
+      </div>
+      <nav class="admin-nav">
+        <button data-tab="dashboard" class="nav-item active">ダッシュボード</button>
+        <button data-tab="reservations" class="nav-item">予約一覧</button>
+        <button data-tab="menus" class="nav-item">メニュー</button>
+        <button data-tab="toppings" class="nav-item">トッピング</button>
+        <button data-tab="holidays" class="nav-item">臨時休業日</button>
+        <button data-tab="settings" class="nav-item">設定</button>
+      </nav>
+      <div class="sidebar-actions"><button id="logoutButton" class="ghost-button">ログアウト</button><a href="../" class="ghost-button link-button">予約画面を見る</a></div>
+    </aside>
+
+    <main class="admin-content">
+      <div class="admin-mobile-header"><div><div class="brand-mark">ADMIN</div><strong id="mobileStoreName">店舗予約</strong></div><button id="mobileLogout" class="ghost-button">ログアウト</button></div>
+
+      <section id="tab-dashboard" class="tab-panel active">
+        <div class="page-title"><div><h2>ダッシュボード</h2><p>予約状況と店舗設定を確認できます。</p></div></div>
+        <div class="stat-grid"><div class="stat-card"><span>今日の予約</span><strong id="statToday">0</strong></div><div class="stat-card"><span>予約総数</span><strong id="statTotal">0</strong></div><div class="stat-card"><span>登録メニュー</span><strong id="statMenus">0</strong></div><div class="stat-card"><span>休業予定日</span><strong id="statHolidays">0</strong></div></div>
+        <div class="dashboard-grid"><div class="panel"><div class="panel-head"><h3>直近の予約</h3><button class="text-button" data-go-tab="reservations">すべて見る</button></div><div id="recentReservations" class="mini-table"></div></div><div class="panel"><div class="panel-head"><h3>店舗情報</h3><button class="text-button" data-go-tab="settings">編集</button></div><div id="dashboardSettings" class="settings-preview"></div></div></div>
+      </section>
+
+      <section id="tab-reservations" class="tab-panel">
+        <div class="page-title"><div><h2>予約一覧</h2><p>予約された日時・お名前・人数・連絡先・注文内容を確認できます。</p></div><button id="refreshReservations" class="secondary-button">更新</button></div>
+        <div class="filter-bar"><label class="field"><span>日付で絞り込み</span><input id="reservationDateFilter" type="date"></label><label class="field"><span>状態</span><select id="reservationStatusFilter"><option value="">すべて</option><option value="confirmed">受付済み</option><option value="cancelled">キャンセル</option></select></label></div>
+        <div class="panel table-panel"><div id="reservationTable" class="responsive-table-wrap"></div></div>
+      </section>
+
+      <section id="tab-menus" class="tab-panel">
+        <div class="page-title"><div><h2>メニュー</h2><p>コードを書かずにメニューの追加・変更・売り切れ設定ができます。</p></div><button id="addMenuButton" class="primary-button small">＋ メニュー追加</button></div>
+        <div id="menuAdminList" class="admin-card-list"></div>
+      </section>
+
+      <section id="tab-toppings" class="tab-panel">
+        <div class="page-title"><div><h2>トッピング</h2><p>メニューごとにトッピングを追加できます。0件なら予約画面には表示されません。</p></div></div>
+        <div id="toppingAdminList" class="admin-card-list"></div>
+      </section>
+
+      <section id="tab-holidays" class="tab-panel">
+        <div class="page-title"><div><h2>臨時休業日</h2><p>設定した日は予約画面からご来店日として選べなくなります。</p></div></div>
+        <div class="panel add-row-panel"><div class="form-grid two"><label class="field"><span>休業日</span><input id="holidayDate" type="date"></label><label class="field"><span>理由・メモ（任意）</span><input id="holidayReason" type="text" maxlength="100" placeholder="臨時休業"></label></div><button id="addHolidayButton" class="primary-button small">休業日を追加</button></div>
+        <div id="holidayList" class="admin-card-list"></div>
+      </section>
+
+      <section id="tab-settings" class="tab-panel">
+        <div class="page-title"><div><h2>店舗設定</h2><p>予約画面に反映される内容をここから変更できます。</p></div></div>
+        <form id="settingsForm" class="panel form-panel">
+          <label class="field"><span>店舗名</span><input id="settingStoreName" type="text" maxlength="100" required></label>
+          <label class="field"><span>予約画面の背景画像URL</span><input id="settingBackgroundUrl" type="url" placeholder="https://..." maxlength="1500"><small>画像そのものをURLで指定します。imgur等の直リンクや自分で用意した画像URLを使用してください。</small></label>
+          <label class="field"><span>予約通知を受け取るメールアドレス</span><input id="settingNotifyEmail" type="email" maxlength="160" placeholder="shop@example.com"></label>
+          <button class="primary-button" type="submit">店舗設定を保存</button>
+        </form>
+        <form id="passwordForm" class="panel form-panel">
+          <div><h3>管理者パスワード変更</h3><p class="muted">ここで変更したパスワードは、次回ログインから使用します。</p></div>
+          <label class="field"><span>現在のパスワード</span><input id="currentPassword" type="password" autocomplete="current-password" required></label>
+          <label class="field"><span>新しいパスワード</span><input id="newPassword" type="password" autocomplete="new-password" minlength="8" maxlength="100" required></label>
+          <label class="field"><span>新しいパスワード（確認）</span><input id="confirmPassword" type="password" autocomplete="new-password" minlength="8" maxlength="100" required></label>
+          <button class="secondary-button" type="submit">パスワードを変更</button>
+        </form>
+      </section>
+    </main>
+  </section>
+
+  <div id="menuModal" class="modal" hidden>
+    <div class="modal-backdrop"></div>
+    <div class="modal-card large">
+      <button class="modal-close" data-close="menuModal" aria-label="閉じる">×</button>
+      <h2 id="menuModalTitle">メニュー追加</h2>
+      <form id="menuForm">
+        <input id="menuId" type="hidden">
+        <label class="field"><span>メニュー名 <b>*</b></span><input id="menuName" type="text" maxlength="100" required></label>
+        <div class="form-grid two"><label class="field"><span>価格（円） <b>*</b></span><input id="menuPrice" type="number" min="0" max="999999" required></label><label class="field"><span>説明</span><input id="menuDescription" type="text" maxlength="200"></label></div>
+        <label class="switch-row"><input id="menuSoldOut" type="checkbox"><span>売り切れにする</span></label>
+        <div class="toppings-editor"><div class="panel-head"><h3>トッピング</h3><button id="addToppingRowButton" type="button" class="text-button">＋追加</button></div><div id="toppingRows"></div><p class="muted small-text">トッピングが1件以上あると、予約画面にトッピング欄が表示されます。</p></div>
+        <div class="modal-actions"><button type="button" class="secondary-button" data-close="menuModal">キャンセル</button><button type="submit" class="primary-button">保存</button></div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

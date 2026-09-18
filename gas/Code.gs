@@ -1,10 +1,3 @@
-/**
- * Restaurant Reservation - Google Apps Script backend
- *
- * Googleスプレッドシートをデータベースとして使用します。
- * 管理画面での追加・変更は、このコードを触らずに可能です。
- */
-
 const SHEETS = {
   SETTINGS: 'Settings',
   MENUS: 'Menus',

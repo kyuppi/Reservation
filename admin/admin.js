@@ -92,6 +92,7 @@
     $('settingStoreName').value = state.settings.storeName || '';
     $('settingBackgroundUrl').value = state.settings.backgroundUrl || '';
     $('settingNotifyEmail').value = state.settings.notifyEmail || '';
+    $('settingMaxReservationsPerSlot').value = Number(state.settings.maxReservationsPerSlot || 0);
   }
 
   function openMenuModal(id) {
@@ -140,7 +141,7 @@
 
   $('menuForm').addEventListener('submit', saveMenu);
   $('addToppingRowButton').addEventListener('click', () => addToppingRow());
-  $('settingsForm').addEventListener('submit', async (e) => { e.preventDefault(); try { await call('updateSettings',{storeName:$('settingStoreName').value.trim(),backgroundUrl:$('settingBackgroundUrl').value.trim(),notifyEmail:$('settingNotifyEmail').value.trim()}); await loadAll(); toast('店舗設定を保存しました。'); } catch(e){toast(e.message,'error');} });
+  $('settingsForm').addEventListener('submit', async (e) => { e.preventDefault(); try { await call('updateSettings',{storeName:$('settingStoreName').value.trim(),backgroundUrl:$('settingBackgroundUrl').value.trim(),notifyEmail:$('settingNotifyEmail').value.trim(),maxReservationsPerSlot:Number($('settingMaxReservationsPerSlot').value || 0)}); await loadAll(); toast('店舗設定を保存しました。'); } catch(e){toast(e.message,'error');} });
   $('passwordForm').addEventListener('submit', async (e) => { e.preventDefault(); const current=$('currentPassword').value,newPass=$('newPassword').value,confirmPass=$('confirmPassword').value; if(newPass.length<8) return toast('新しいパスワードは8文字以上にしてください。','error'); if(newPass!==confirmPass) return toast('確認用パスワードが一致しません。','error'); try { const currentHash=await AppApi.hashPassword(current), newHash=await AppApi.hashPassword(newPass); await call('changePassword',{currentHash,newHash}); $('passwordForm').reset(); toast('パスワードを変更しました。'); } catch(e){toast(e.message,'error');} });
   $('addHolidayButton').addEventListener('click', async () => { const date=$('holidayDate').value,reason=$('holidayReason').value.trim(); if(!date) return toast('休業日を選択してください。','error'); try { await call('addHoliday',{date,reason}); $('holidayDate').value=''; $('holidayReason').value=''; await loadAll(); toast('臨時休業日を追加しました。'); } catch(e){toast(e.message,'error');} });
   $('reservationDateFilter').addEventListener('change', renderReservations); $('reservationStatusFilter').addEventListener('change', renderReservations); $('refreshReservations').addEventListener('click', loadAll);
